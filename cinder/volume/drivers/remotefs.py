@@ -502,13 +502,20 @@ class RemoteFSDriver(driver.BaseVD):
     def copy_image_to_volume(self, context, volume, image_service, image_id):
         """Fetch the image from image_service and write it to the volume."""
 
-        image_utils.fetch_to_raw(context,
-                                 image_service,
-                                 image_id,
-                                 self.local_path(volume),
-                                 self.configuration.volume_dd_blocksize,
-                                 size=volume.size,
-                                 run_as_root=self._execute_as_root)
+        volume_format = 'raw'
+        if getattr(self.configuration,
+                   self.driver_prefix + '_qcow2_volumes', False):
+            volume_format = 'qcow2'
+
+        image_utils.fetch_to_volume_format(
+            context,
+            image_service,
+            image_id,
+            self.local_path(volume),
+            volume_format,
+            self.configuration.volume_dd_blocksize,
+            size=volume.size,
+            run_as_root=self._execute_as_root)
 
         # NOTE (leseb): Set the virtual size of the image
         # the raw conversion overwrote the destination file
